@@ -2,7 +2,6 @@
 using ProvisionAPI.Models;
 using ProvisionAPI.Models.AuthController;
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.InteropServices;
 
 namespace ProvisionAPI.Services
 {
@@ -10,7 +9,8 @@ namespace ProvisionAPI.Services
 	{
 		private IProjectDbConn _dbConn;
 		private ICustomEncryption _customEncryption;
-		public AuthServices(IProjectDbConn projectDbConn, ICustomEncryption customEncryption) { 
+		public AuthServices(IProjectDbConn projectDbConn, ICustomEncryption customEncryption)
+		{
 			this._dbConn = projectDbConn;
 			this._customEncryption = customEncryption;
 		}
@@ -20,9 +20,17 @@ namespace ProvisionAPI.Services
 			throw new NotImplementedException();
 		}
 
-		public Task<User> Login(string username, string password)
+		public async Task<User> Login(string username, string password)
 		{
-			throw new NotImplementedException();
+			var usr = await getUserByEmail(username);
+			var entryPassword = this._customEncryption.GenerateHashValue(password);
+
+			if (usr != null && usr.Password.Equals(entryPassword))
+			{
+				return usr;
+			}
+
+			return null;
 		}
 		private bool ValidateEmail(string Email)
 		{
@@ -42,6 +50,14 @@ namespace ProvisionAPI.Services
 			{
 				throw new Exception(string.Format("Possible Null value in registration : {0}", JsonConvert.SerializeObject(registerUser)));
 			}
+
+			//check user existed 
+			var usr = await getUserByEmail(registerUser.Email);
+			if (usr != null)
+			{
+				throw new Exception("User Email Registered");
+			}
+
 			var password = this._customEncryption.GenerateHashValue(registerUser.Password);
 			parameters.Add("un", registerUser.UserName);
 			parameters.Add("p", password);
@@ -50,7 +66,7 @@ namespace ProvisionAPI.Services
 
 			return true;
 		}
-		private async User getUserByEmail(string email)
+		private async Task<User> getUserByEmail(string email)
 		{
 			var SPName = "\"ProvisionProj\".getUserByEmail";
 			if (string.IsNullOrEmpty(email))
@@ -59,11 +75,13 @@ namespace ProvisionAPI.Services
 			}
 			Dictionary<string, object> parameters = new Dictionary<string, object>();
 			parameters.Add("e", email);
-			var queryResult = await this._dbConn.ExecuteStoredProc(SPName, parameters);
+			var queryResult = await this._dbConn.ExecuteFunctions(SPName, parameters);
 			if (queryResult.Rows.Count > 0)
 			{
-
+				var usrs = DataTableToObject.ConvertDataTable<User>(queryResult);
+				return usrs.FirstOrDefault();
 			}
+			return null;
 		}
 
 	}

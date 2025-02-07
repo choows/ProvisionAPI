@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ProvisionAPI.Models.AuthController;
 using ProvisionAPI.Services;
 
@@ -9,7 +8,7 @@ namespace ProvisionAPI.Controllers
 	[ApiController]
 	public class AuthController : ControllerBase
 	{
-		private IAuthServices _authServices; 
+		private IAuthServices _authServices;
 
 		public AuthController(IAuthServices authServices)
 		{
@@ -19,7 +18,7 @@ namespace ProvisionAPI.Controllers
 		[HttpPost("Register")]
 		public async Task<IActionResult> Register(RegisterUser registerUser)
 		{
-			if(await _authServices.Register(registerUser))
+			if (await _authServices.Register(registerUser))
 			{
 				return Ok();
 			}
@@ -28,5 +27,26 @@ namespace ProvisionAPI.Controllers
 				return BadRequest("Unable to register user");
 			}
 		}
+
+		[HttpPost("LoginViaEmail")]
+		public async Task<IActionResult> LoginViaEmail(LoginUser loginCredential)
+		{
+			var usr = await _authServices.Login(loginCredential.Email, loginCredential.Password);
+
+			if (usr != null)
+			{
+				return Ok(usr);
+			}
+			else
+			{
+				return BadRequest("Incorrect Email or Password");
+			}
+		}
+
+		//[HttpPost("ChangePassword")]
+		//public async Task<IActionResult> ChangePassword()
+		//{
+
+		//}
 	}
 }

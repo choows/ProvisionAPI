@@ -1,7 +1,6 @@
 ﻿using Npgsql;
 using NpgsqlTypes;
 using System.Data;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace ProvisionAPI.Services
 {
@@ -19,7 +18,7 @@ namespace ProvisionAPI.Services
 		}
 		private DbType getDbType(object val)
 		{
-			if(val.GetType() == typeof(DateTime))
+			if (val.GetType() == typeof(DateTime))
 			{
 				return DbType.DateTime;
 			}
@@ -60,16 +59,20 @@ namespace ProvisionAPI.Services
 			dt.Clear(); //clear it all 
 
 			var column = reader.GetColumnSchema();
-			foreach(var col in column)
+			foreach (var col in column)
 			{
-				dt.Columns.Add(col.ColumnName);
+				var newCol = new DataColumn();
+				newCol.ColumnName = col.ColumnName;
+				newCol.DataType = col.DataType;
+				dt.Columns.Add(newCol);
 			}
 			while (await reader.ReadAsync())
 			{
 				DataRow row = dt.NewRow();
-				foreach(var col in column)
+				foreach (var col in column)
 				{
 					row[col.ColumnName] = reader.GetValue(col.ColumnOrdinal.Value);
+
 				}
 				dt.Rows.Add(row);
 				//Console.WriteLine(reader.GetString(0));
@@ -87,7 +90,7 @@ namespace ProvisionAPI.Services
 
 			foreach (var param in parameters)
 			{
-				command1.Parameters.Add(new NpgsqlParameter() { Value = param.Value, NpgsqlDbType = getNpgsqlDbType(param.Value), ParameterName = param.Key , Direction = ParameterDirection.Input});
+				command1.Parameters.Add(new NpgsqlParameter() { Value = param.Value, NpgsqlDbType = getNpgsqlDbType(param.Value), ParameterName = param.Key, Direction = ParameterDirection.Input });
 			}
 
 			await using var reader = await command1.ExecuteReaderAsync();
@@ -110,6 +113,41 @@ namespace ProvisionAPI.Services
 				//Console.WriteLine(reader.GetString(0));
 			}
 			return dt;
+		}
+
+		public async Task<DataTable> ExecuteFunctions(string FunctionName, IDictionary<string, object> parameters)
+		{
+			var query = string.Format("SELECT * FROM {0}({1})", FunctionName, GenerateFunctionParameters(parameters));
+			return await ExecuteQuery(query);
+		}
+
+		private string GenerateFunctionParameters(IDictionary<string, object> parameters)
+		{
+			var query = "";
+			var queryList = new List<string>();
+			foreach (var param in parameters.Values)
+			{
+				var val = string.Empty;
+				if (param is string)
+				{
+					val = string.Format("'{0}'", param);
+				}
+				if (param is int || param is decimal || param is double)
+				{
+					val = param.ToString();
+				}
+				if (param == null)
+				{
+					val = "null";
+				}
+
+				if (!string.IsNullOrEmpty(val))
+				{
+					queryList.Add(val);
+				}
+			}
+			query = string.Join(",", queryList.ToArray());
+			return query;
 		}
 	}
 }
