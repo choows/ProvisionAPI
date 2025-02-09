@@ -30,6 +30,15 @@ namespace ProvisionAPI.Services
 			{
 				return NpgsqlDbType.Timestamp;
 			}
+			if(val.GetType() == typeof(int))
+			{
+				return NpgsqlDbType.Integer;
+			}
+			if (val.GetType() == typeof(bool))
+			{
+				return NpgsqlDbType.Boolean;
+			}
+
 			return NpgsqlDbType.Varchar; //default string
 		}
 

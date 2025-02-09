@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 
 namespace ProvisionAPI.Models.AuthController
@@ -7,8 +8,10 @@ namespace ProvisionAPI.Models.AuthController
 	{
 		[NotNull]
 		[EmailAddress]
+		[JsonProperty("email")]
 		public string Email { get; set; }
 		[NotNull]
+		[JsonProperty("password")]
 		public string Password { get; set; }
 	}
 }

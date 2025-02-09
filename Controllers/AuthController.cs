@@ -9,10 +9,11 @@ namespace ProvisionAPI.Controllers
 	public class AuthController : ControllerBase
 	{
 		private IAuthServices _authServices;
-
-		public AuthController(IAuthServices authServices)
+		private IJwtAuthenticationService _jwtAuthenticationService;
+		public AuthController(IAuthServices authServices, IJwtAuthenticationService jwtAuthenticationService)
 		{
 			_authServices = authServices;
+			_jwtAuthenticationService = jwtAuthenticationService;
 		}
 
 		[HttpPost("Register")]
@@ -32,10 +33,19 @@ namespace ProvisionAPI.Controllers
 		public async Task<IActionResult> LoginViaEmail(LoginUser loginCredential)
 		{
 			var usr = await _authServices.Login(loginCredential.Email, loginCredential.Password);
-
+			
 			if (usr != null)
 			{
-				return Ok(usr);
+				var jwtToken = await _jwtAuthenticationService.GenerateToken(usr);
+
+				return Ok(new { 
+					UserId = usr.ID,
+					UserEmail = usr.Email,
+					UserName = usr.UserName,
+					Token = jwtToken.Token,
+					PasswordExpiry  = usr.PasswordExpiry,
+					RefreshToken = jwtToken.refreshToken.Token
+				});
 			}
 			else
 			{
@@ -43,10 +53,17 @@ namespace ProvisionAPI.Controllers
 			}
 		}
 
-		//[HttpPost("ChangePassword")]
-		//public async Task<IActionResult> ChangePassword()
-		//{
+		[HttpPost("ReAuthenticate")]
+		public async Task<IActionResult> ReAuthenticate(ReAuthenticateUser reAuthenticateUser)
+		{
+			try
+			{
 
-		//}
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(ex.Message);
+			}
+		}
 	}
 }

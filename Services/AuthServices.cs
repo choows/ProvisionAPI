@@ -22,10 +22,11 @@ namespace ProvisionAPI.Services
 
 		public async Task<User> Login(string username, string password)
 		{
-			var usr = await getUserByEmail(username);
+			
 			var entryPassword = this._customEncryption.GenerateHashValue(password);
+			var usr = await getUserByEmailandPassword(username, entryPassword);
 
-			if (usr != null && usr.Password.Equals(entryPassword))
+			if (usr != null)
 			{
 				return usr;
 			}
@@ -83,6 +84,24 @@ namespace ProvisionAPI.Services
 			}
 			return null;
 		}
+		private async Task<User> getUserByEmailandPassword(string email, string password)
+		{
+			var SPName = "\"ProvisionProj\".getUserByEmailandPassword";
+			if (string.IsNullOrEmpty(email))
+			{
+				return null;
+			}
+			Dictionary<string, object> parameters = new Dictionary<string, object>();
+			parameters.Add("e", email);
+			parameters.Add("p", password);
 
+			var queryResult = await this._dbConn.ExecuteFunctions(SPName, parameters);
+			if (queryResult.Rows.Count > 0)
+			{
+				var usrs = DataTableToObject.ConvertDataTable<User>(queryResult);
+				return usrs.FirstOrDefault();
+			}
+			return null;
+		}
 	}
 }
