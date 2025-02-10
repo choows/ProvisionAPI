@@ -18,6 +18,7 @@ namespace ProvisionAPI
 		public static void RegisterServices(IServiceCollection services, IConfiguration configuration)
 		{
 			services.AddScoped<IAuthServices, AuthServices>();
+			services.AddScoped<IMiscServices, MiscServices>();
 			services.AddScoped<IProjectDbConn>(x =>
 				new ProjectDbConn(configuration.GetConnectionString("ProjectDB")));
 			services.AddScoped<ICustomEncryption, CustomEncryption>();

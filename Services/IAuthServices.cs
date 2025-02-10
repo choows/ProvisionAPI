@@ -9,5 +9,6 @@ namespace ProvisionAPI.Services
 		public Task<User> Login(string username, string password);
 		public Task<User> GetUserInfoById(int Id);
 
+		public Task<bool> UpdatePassword(string OldPassword, string ConfirmPassword, string NewPassword, string Email);
 	}
 }

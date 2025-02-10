@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ProvisionAPI.Models;
 using ProvisionAPI.Models.AuthController;
 using ProvisionAPI.Services;
 
@@ -21,7 +23,7 @@ namespace ProvisionAPI.Controllers
 		{
 			if (await _authServices.Register(registerUser))
 			{
-				return Ok();
+				return Ok("User Register Successfully");
 			}
 			else
 			{
@@ -33,17 +35,18 @@ namespace ProvisionAPI.Controllers
 		public async Task<IActionResult> LoginViaEmail(LoginUser loginCredential)
 		{
 			var usr = await _authServices.Login(loginCredential.Email, loginCredential.Password);
-			
+
 			if (usr != null)
 			{
 				var jwtToken = await _jwtAuthenticationService.GenerateToken(usr);
 
-				return Ok(new { 
+				return Ok(new
+				{
 					UserId = usr.ID,
 					UserEmail = usr.Email,
 					UserName = usr.UserName,
 					Token = jwtToken.Token,
-					PasswordExpiry  = usr.PasswordExpiry,
+					PasswordExpiry = usr.PasswordExpiry,
 					RefreshToken = jwtToken.refreshToken.Token
 				});
 			}
@@ -58,7 +61,30 @@ namespace ProvisionAPI.Controllers
 		{
 			try
 			{
+				var jwtToken = await _jwtAuthenticationService.RegenerateRefreshToken(reAuthenticateUser.Token, reAuthenticateUser.RefreshToken);
+				return Ok(new
+				{
+					Token = jwtToken.Token,
+					RefreshToken = jwtToken.refreshToken.Token
+				});
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(ex.Message);
+			}
+		}
 
+		[HttpPost("ChangePassword")]
+		[Authorize]
+		public async Task<IActionResult> Logout(ChangePassword changePassword)
+		{
+			try
+			{
+				if (await this._authServices.UpdatePassword(changePassword.Password, changePassword.ConfirmPassword, changePassword.NewPassword, changePassword.Email))
+				{
+					return Ok("Done change password");
+				}
+				throw new Exception("Unable to change password");
 			}
 			catch (Exception ex)
 			{

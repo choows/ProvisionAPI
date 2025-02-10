@@ -15,11 +15,45 @@ namespace ProvisionAPI.Services
 			this._customEncryption = customEncryption;
 		}
 
-		public Task<User> GetUserInfoById(int Id)
+		public async Task<User> GetUserInfoById(int Id)
 		{
-			throw new NotImplementedException();
+			var SPName = "\"ProvisionProj\".getUserById";
+			Dictionary<string, object> parameters = new Dictionary<string, object>();
+			parameters.Add("uid", Id);
+			var queryResult = await this._dbConn.ExecuteFunctions(SPName, parameters);
+			if (queryResult.Rows.Count > 0)
+			{
+				var usrs = DataTableToObject.ConvertDataTable<User>(queryResult);
+				return usrs.FirstOrDefault();
+			}
+			return null;
 		}
+		public async Task<bool> UpdatePassword(string OldPassword,string ConfirmPassword, string NewPassword, string Email)
+		{
+			var SPName = "\"ProvisionProj\".updatePassword";
+			Dictionary<string, object> parameters = new Dictionary<string, object>();
+			//validate
+			if (string.IsNullOrEmpty(OldPassword) ||
+				string.IsNullOrEmpty(NewPassword) ||
+				string.Compare(NewPassword, ConfirmPassword, false) != 0 ||
+				string.IsNullOrEmpty(Email)
+				|| !ValidateEmail(Email)
+				)
+			{
+				throw new Exception("Validation failed");
+			}
+			var usr = await getUserByEmail(Email);
+			if (usr == null)
+			{
+				throw new Exception("Incorrect username/password");
+			}
 
+			var password = this._customEncryption.GenerateHashValue(NewPassword);
+			parameters.Add("pw", password);
+			parameters.Add("id", usr.ID);
+			var result = await this._dbConn.ExecuteStoredProc(SPName, parameters);
+			return result;
+		}
 		public async Task<User> Login(string username, string password)
 		{
 			

@@ -90,38 +90,51 @@ namespace ProvisionAPI.Services
 		}
 
 
-		public async Task<DataTable> ExecuteStoredProc(string SPName, IDictionary<string, object> parameters)
+		public async Task<bool> ExecuteStoredProc(string SPName, IDictionary<string, object> parameters)
 		{
-			using var command1 = new NpgsqlCommand(SPName, _connection)
+			//since SP cannot return anything, so better to return bool
+			try
 			{
-				CommandType = CommandType.StoredProcedure
-			};
 
-			foreach (var param in parameters)
-			{
-				command1.Parameters.Add(new NpgsqlParameter() { Value = param.Value, NpgsqlDbType = getNpgsqlDbType(param.Value), ParameterName = param.Key, Direction = ParameterDirection.Input });
-			}
-
-			await using var reader = await command1.ExecuteReaderAsync();
-			DataTable dt = new DataTable();
-			dt.Clear(); //clear it all 
-
-			var column = reader.GetColumnSchema();
-			foreach (var col in column)
-			{
-				dt.Columns.Add(col.ColumnName);
-			}
-			while (await reader.ReadAsync())
-			{
-				DataRow row = dt.NewRow();
-				foreach (var col in column)
+				using var command1 = new NpgsqlCommand(SPName, _connection)
 				{
-					row[col.ColumnName] = reader.GetValue(col.ColumnOrdinal.Value);
+					CommandType = CommandType.StoredProcedure
+				};
+
+				foreach (var param in parameters)
+				{
+					command1.Parameters.Add(new NpgsqlParameter() { Value = param.Value, NpgsqlDbType = getNpgsqlDbType(param.Value), ParameterName = param.Key, Direction = ParameterDirection.Input });
 				}
-				dt.Rows.Add(row);
-				//Console.WriteLine(reader.GetString(0));
+
+				await using var reader = await command1.ExecuteReaderAsync();
+
+				return true;
+
+				//DataTable dt = new DataTable();
+				//dt.Clear(); //clear it all 
+
+				//var column = reader.GetColumnSchema();
+				//foreach (var col in column)
+				//{
+				//	dt.Columns.Add(col.ColumnName);
+				//}
+				//while (await reader.ReadAsync())
+				//{
+				//	DataRow row = dt.NewRow();
+				//	foreach (var col in column)
+				//	{
+				//		row[col.ColumnName] = reader.GetValue(col.ColumnOrdinal.Value);
+				//	}
+				//	dt.Rows.Add(row);
+				//	//Console.WriteLine(reader.GetString(0));
+				//}
+				//return dt;
 			}
-			return dt;
+			catch (Exception ex)
+			{
+				throw;
+			}
+
 		}
 
 		public async Task<DataTable> ExecuteFunctions(string FunctionName, IDictionary<string, object> parameters)

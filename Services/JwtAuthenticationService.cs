@@ -73,8 +73,8 @@ namespace ProvisionAPI.Services
 				Token = Guid.NewGuid().ToString(),
 				JwtId = securitytoken.Id,
 				UserId = UserId,
-				CreationDate = DateTime.UtcNow,
-				ExpiryDate = DateTime.UtcNow.AddMonths(6)
+				CreationDate = DateTime.Now,
+				ExpiryDate = DateTime.Now.AddMonths(6)
 			};
 			await InsertRefreshToken(token);
 			return token;
@@ -82,7 +82,6 @@ namespace ProvisionAPI.Services
 		private ClaimsPrincipal GetPrincipalFromToken(string token)
 		{
 			var tokenHandler = new JwtSecurityTokenHandler();
-
 			try
 			{
 				var tokenValidationParameters = _tokenValidationParameters.Clone();
@@ -108,7 +107,7 @@ namespace ProvisionAPI.Services
 					   StringComparison.InvariantCultureIgnoreCase);
 		}
 
-		private async Task<JwtToken> RegenerateRefreshToken(string token, string refreshToken)
+		public async Task<JwtToken> RegenerateRefreshToken(string token, string refreshToken)
 		{
 			var validatedToken = GetPrincipalFromToken(token);
 
@@ -191,15 +190,16 @@ namespace ProvisionAPI.Services
 					SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
 				};
 				var token = tokenHandler.CreateToken(tokenDescriptor);
+				var refreshToken = await GenerateRefrehToken(token, user.ID);
 				return new JwtToken
 				{
 					Token = tokenHandler.WriteToken(token),
-					refreshToken = await GenerateRefrehToken(token, user.ID)
+					refreshToken = refreshToken
 				};
 			}
 			catch (Exception ex)
 			{
-				return null;
+				throw;
 			}
 
 		}
