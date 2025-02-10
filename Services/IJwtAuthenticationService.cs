@@ -6,5 +6,6 @@ namespace ProvisionAPI.Services
 	{
 		public Task<JwtToken> GenerateToken(User user);
 		public Task<JwtToken> RegenerateRefreshToken(string token, string refreshToken);
+		public int GetUserIDFromToken(string token);
 	}
 }

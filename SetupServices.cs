@@ -19,6 +19,7 @@ namespace ProvisionAPI
 		{
 			services.AddScoped<IAuthServices, AuthServices>();
 			services.AddScoped<IMiscServices, MiscServices>();
+			services.AddScoped<IAssetProcessing, CloudinaryAsset>();
 			services.AddScoped<IProjectDbConn>(x =>
 				new ProjectDbConn(configuration.GetConnectionString("ProjectDB")));
 			services.AddScoped<ICustomEncryption, CustomEncryption>();

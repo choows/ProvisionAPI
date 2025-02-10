@@ -106,7 +106,21 @@ namespace ProvisionAPI.Services
 				   jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,
 					   StringComparison.InvariantCultureIgnoreCase);
 		}
-
+		public int GetUserIDFromToken(string token)
+		{
+			var validatedToken = GetPrincipalFromToken(token);
+			if (validatedToken == null)
+			{
+				throw new Exception("Invalid Token");
+			}
+			string strUserId = validatedToken.Claims.Single(x => x.Type == "UserId").Value;
+			long userId = 0;
+			if(!long.TryParse(strUserId, out userId))
+			{
+				throw new Exception("Invalid Parsing");
+			}
+			return (int)userId;
+		}
 		public async Task<JwtToken> RegenerateRefreshToken(string token, string refreshToken)
 		{
 			var validatedToken = GetPrincipalFromToken(token);

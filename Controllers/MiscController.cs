@@ -12,9 +12,11 @@ namespace ProvisionAPI.Controllers
 	public class MiscController : ControllerBase
 	{
 		private IMiscServices _miscService;
+		private readonly IAssetProcessing _assetProcessing;
 
-		public MiscController(IMiscServices services) {
+		public MiscController(IMiscServices services, IAssetProcessing assetProcessing) {
 			this._miscService = services;
+			this._assetProcessing = assetProcessing;
 		}
 
 		[HttpGet("GetUnits")]
@@ -81,6 +83,28 @@ namespace ProvisionAPI.Controllers
 			{
 				return BadRequest(ex.Message);
 			}
+		}
+
+		[HttpPost("UploadImage")]
+		[Authorize]
+		public async Task<IActionResult> UploadImage(IFormFile file)
+		{
+			try
+			{
+				if(file == null)
+				{
+					throw new Exception("file not found");
+				}
+				var stream = file.OpenReadStream();
+				var name = file.FileName;
+				var resp = await this._assetProcessing.UploadImage(stream, name);
+				return Ok(new { Status = "OK" , Url = resp });
+			}
+			catch(Exception ex)
+			{
+				return BadRequest(ex);
+			}
+			
 		}
 	}
 }
