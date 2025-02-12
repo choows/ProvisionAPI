@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using ProvisionAPI.Models;
 using ProvisionAPI.Models.MiscController;
 using ProvisionAPI.Services;
@@ -13,10 +14,12 @@ namespace ProvisionAPI.Controllers
 	{
 		private IMiscServices _miscService;
 		private readonly IAssetProcessing _assetProcessing;
+		private readonly IJwtAuthenticationService _jwtAuthenticationService;
 
-		public MiscController(IMiscServices services, IAssetProcessing assetProcessing) {
+		public MiscController(IMiscServices services, IAssetProcessing assetProcessing, IJwtAuthenticationService jwtAuthenticationService) {
 			this._miscService = services;
 			this._assetProcessing = assetProcessing;
+			this._jwtAuthenticationService = jwtAuthenticationService;
 		}
 
 		[HttpGet("GetUnits")]
@@ -97,14 +100,21 @@ namespace ProvisionAPI.Controllers
 				}
 				var stream = file.OpenReadStream();
 				var name = file.FileName;
-				var resp = await this._assetProcessing.UploadImage(stream, name);
-				return Ok(new { Status = "OK" , Url = resp });
+				if (!Request.Headers.TryGetValue("Authorization", out StringValues token))
+				{
+					throw new Exception("Token not found");
+				}
+
+				var uid = _jwtAuthenticationService.GetUserIDFromToken(token.ToString().Replace("Bearer", "").Trim());
+				var resp = await this._assetProcessing.UploadImage(stream, name, uid);
+				return Ok(new { Status = "OK" , Url = resp.Item1, id= resp.Item2 });
 			}
 			catch(Exception ex)
 			{
 				return BadRequest(ex);
 			}
-			
 		}
+
+
 	}
 }

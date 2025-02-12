@@ -2,6 +2,6 @@
 {
 	public interface IAssetProcessing
 	{
-		public Task<string> UploadImage(Stream imageStream, string Name);
+		public Task<Tuple<string, long>> UploadImage(Stream imageStream, string Name, int uid);
 	}
 }

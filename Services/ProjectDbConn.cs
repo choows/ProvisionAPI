@@ -38,7 +38,22 @@ namespace ProvisionAPI.Services
 			{
 				return NpgsqlDbType.Boolean;
 			}
-
+			if(val.GetType() == typeof(String))
+			{
+				return NpgsqlDbType.Text;
+			}
+			if(val.GetType() == typeof(decimal))
+			{
+				return NpgsqlDbType.Numeric;
+			}
+			if(val.GetType() == typeof(double))
+			{
+				return NpgsqlDbType.Double;
+			}
+			if (val.GetType() == typeof(long))
+			{
+				return NpgsqlDbType.Bigint;
+			}
 			return NpgsqlDbType.Varchar; //default string
 		}
 

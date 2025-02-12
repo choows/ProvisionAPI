@@ -2,20 +2,25 @@
 using CloudinaryDotNet.Actions;
 using dotenv.net;
 using Newtonsoft.Json;
+using ProvisionAPI.Models;
+using ProvisionAPI.Models.AuthController;
 using System.Net;
 namespace ProvisionAPI.Services
 {
 	public class CloudinaryAsset : IAssetProcessing
 	{
 		private readonly Cloudinary cloudinary;
-		public CloudinaryAsset()
+		private IProjectDbConn _projectDbConn;
+
+		public CloudinaryAsset(IProjectDbConn projectDbConn)
 		{
 			DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
 			cloudinary = new Cloudinary(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
 			cloudinary.Api.Secure = true;
+			this._projectDbConn = projectDbConn;
 		}
 
-		public async Task<string> UploadImage(Stream imageStream, string Name)
+		public async Task<Tuple<string, long>> UploadImage(Stream imageStream, string Name, int uid)
 		{
 			var ImageParams = new ImageUploadParams()
 			{
@@ -33,8 +38,24 @@ namespace ProvisionAPI.Services
 			{
 				throw new Exception(uploadResult.Error.Message);
 			}
-			return (uploadResult.Url.AbsoluteUri);
+			var result = await this.InsertIntoDb(uploadResult.Url.AbsoluteUri, JsonConvert.SerializeObject(uploadResult.JsonObj), (int)CustomAssetType.Image, uid);
+			return (Tuple.Create<string,long>(uploadResult.Url.AbsoluteUri,result) );
 		}
+
+		private async Task<long> InsertIntoDb(string Url, string AdditionalInfo, int Type, int uid)
+		{
+
+			var id = long.Parse(uid.ToString() + DateTime.Now.Ticks.ToString());
+			var SPName = "\"ProvisionProj\".insertAsset";
+			Dictionary<string, object> parameters = new Dictionary<string, object>();
+			parameters.Add("id", id);
+			parameters.Add("info", AdditionalInfo);
+			parameters.Add("p", Url);
+			parameters.Add("t", Type);
+			var result = await this._projectDbConn.ExecuteStoredProc(SPName, parameters);
+			return id;
+		}
+
 
 	}
 }
