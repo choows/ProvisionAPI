@@ -21,6 +21,7 @@ namespace ProvisionAPI
 			services.AddScoped<IMiscServices, MiscServices>();
 			services.AddScoped<IAssetProcessing, CloudinaryAsset>();
 			services.AddScoped<IIngredientServices, IngredientServices>();
+			services.AddScoped<IBucketService, BucketService>();
 			services.AddScoped<IProjectDbConn>(x =>
 				new ProjectDbConn(configuration.GetConnectionString("ProjectDB")));
 			services.AddScoped<ICustomEncryption, CustomEncryption>();

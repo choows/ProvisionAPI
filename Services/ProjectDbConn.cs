@@ -30,6 +30,10 @@ namespace ProvisionAPI.Services
 			{
 				return NpgsqlDbType.Timestamp;
 			}
+			if(val.GetType() == typeof(DateOnly))
+			{
+				return NpgsqlDbType.Date;
+			}
 			if(val.GetType() == typeof(int))
 			{
 				return NpgsqlDbType.Integer;
@@ -125,25 +129,6 @@ namespace ProvisionAPI.Services
 
 				return true;
 
-				//DataTable dt = new DataTable();
-				//dt.Clear(); //clear it all 
-
-				//var column = reader.GetColumnSchema();
-				//foreach (var col in column)
-				//{
-				//	dt.Columns.Add(col.ColumnName);
-				//}
-				//while (await reader.ReadAsync())
-				//{
-				//	DataRow row = dt.NewRow();
-				//	foreach (var col in column)
-				//	{
-				//		row[col.ColumnName] = reader.GetValue(col.ColumnOrdinal.Value);
-				//	}
-				//	dt.Rows.Add(row);
-				//	//Console.WriteLine(reader.GetString(0));
-				//}
-				//return dt;
 			}
 			catch (Exception ex)
 			{
@@ -177,7 +162,10 @@ namespace ProvisionAPI.Services
 				{
 					val = "null";
 				}
-
+				if(param is DateOnly || param is DateTime)
+				{
+					val = string.Format("'{0}'", param);
+				}
 				if (!string.IsNullOrEmpty(val))
 				{
 					queryList.Add(val);
