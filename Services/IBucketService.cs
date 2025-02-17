@@ -8,5 +8,6 @@ namespace ProvisionAPI.Services
 	{
 		Task<bool> InsertIntoBucket(AddBucket bucket, int uid);
 		Task<List<GetBucketByRange>> GetBucketByDateRange(DateOnly from, DateOnly to , int uid);
+		Task<bool> UpdateBucket(List<UpdateBucket> updateBuckets, int uid);
 	}
 }

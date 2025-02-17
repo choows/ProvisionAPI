@@ -64,7 +64,7 @@ namespace ProvisionAPI.Controllers
 				}
 				var uid = _jwtAuthenticationService.GetUserIDFromToken(token.ToString().Replace("Bearer", "").Trim());
 				var GetBucketByRangeresult = await this._bucketService.GetBucketByDateRange(from, to, uid);
-				if(GetBucketByRangeresult != null)
+				if (GetBucketByRangeresult != null)
 				{
 					var PerBucketgroup = GetBucketByRangeresult.GroupBy(x => x.PurchaseDate).ToList();
 					foreach (var group in PerBucketgroup)
@@ -76,7 +76,6 @@ namespace ProvisionAPI.Controllers
 							PurchaseDate = group.First().PurchaseDate,
 							ingredients = ingredientGroup.Select(x => new IngredientRequired
 							{
-								//BucketId = x.ID,
 								IngredientId = x.First().IngredientID,
 								Required = x.Sum(s => s.UnitRequired),
 								ImagePath = x.First().IngredientImage,
@@ -99,24 +98,26 @@ namespace ProvisionAPI.Controllers
 			}
 		}
 
-		//[Authorize]
-		//[HttpPost("UpdateBucket")]
-		//public async Task<IActionResult> UpdateBucket(UpdateBucket updateBucket)
-		//{
-		//	try
-		//	{
-		//		if (!Request.Headers.TryGetValue("Authorization", out StringValues token))
-		//		{
-		//			throw new Exception("Token not found");
-		//		}
-		//		var uid = _jwtAuthenticationService.GetUserIDFromToken(token.ToString().Replace("Bearer", "").Trim());
+		[Authorize]
+		[HttpPost("UpdateBucket")]
+		public async Task<IActionResult> UpdateBucket(List<UpdateBucket> updateBucket)
+		{
+			try
+			{
+				if (!Request.Headers.TryGetValue("Authorization", out StringValues token))
+				{
+					throw new Exception("Token not found");
+				}
+				var uid = _jwtAuthenticationService.GetUserIDFromToken(token.ToString().Replace("Bearer", "").Trim());
+				var UpdateBucketResult = await this._bucketService.UpdateBucket(updateBucket, uid);
 
-		//		return Ok(bucket);
-		//	}
-		//	catch (Exception ex)
-		//	{
-		//		return BadRequest(ex.Message);
-		//	}
+				return Ok(UpdateBucketResult ? "Successfully updated" : "failed to update bucket list");
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(ex.Message);
+			}
 
+		}
 	}
 }
