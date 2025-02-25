@@ -21,14 +21,22 @@ namespace ProvisionAPI.Controllers
 		[HttpPost("Register")]
 		public async Task<IActionResult> Register(RegisterUser registerUser)
 		{
-			if (await _authServices.Register(registerUser))
+			try
 			{
-				return Ok("User Register Successfully");
+				if (await _authServices.Register(registerUser))
+				{
+					return Ok(new { status = "Ok", message = "User Register Successfully" });
+				}
+				else
+				{
+					throw new Exception("Unable To Register User");
+				}
 			}
-			else
+			catch(Exception ex)
 			{
-				return BadRequest("Unable to register user");
+				return BadRequest(new { status = "Failed", message = ex.Message });
 			}
+			
 		}
 
 		[HttpPost("LoginViaEmail")]
